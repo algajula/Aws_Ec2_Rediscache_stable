@@ -1,0 +1,65 @@
+mainservice.js -- modify environment.json
+
+natablemaintenance.html -- add TAB --
+<div class="prohome_links">
+		<div class="main">
+		<div class="accordion">
+			<div class="accordion-section">
+				<a class="accordion-section-title" href="#accordion-1">DOA Maintenance</a>
+				<div id="accordion-1" class="accordion-section-content">
+					<ul>
+					<li><a href="#/modifyDaoMaintainance/" class="padding_prohome_links">Modify DOA Maintainance</a></li>
+					<li><a href="#/modifyPCAApprovers/" class="padding_prohome_links">Modify PCA Approvers </a></li>
+					<li><a href="#/modifyPCADelegateAuthority/" class="padding_prohome_links">Modify PCA Delegate Authority </a></li>
+				    </ul>
+				</div><!--end .accordion-section-content-->
+			</div><!--end .accordion-section-->
+		   </div><!--end .accordion-->
+	     </div>
+       </div>
+
+app.js -- $routeProvider --> 
+.when('/modifyDaoMaintainance/', {
+        templateUrl: 'gajula/daoMaintainance.html',
+        controller: 'daoMaintainanceCtrl',
+		resolve : { 
+				'ENVURLS' : ['$q', 'mainGetService', function ($q, mainGetService) {
+					var deferred = $q.defer();
+					mainGetService.getEnvironmentProperties().then(function (data) {
+						deferred.resolve(data);
+					});
+					return deferred.promise;
+				}
+				]
+		}
+      })
+      .when('/modifyPCAApprovers/', {
+        templateUrl: 'gajula/daoMaintainance.html',
+        controller: 'daoMaintainanceCtrl',
+		resolve : { 
+				'ENVURLS' : ['$q', 'mainGetService', function ($q, mainGetService) {
+					var deferred = $q.defer();
+					mainGetService.getEnvironmentProperties().then(function (data) {
+						deferred.resolve(data);
+					});
+					return deferred.promise;
+				}
+				]
+		}
+      })
+      .when('/modifyPCADelegateAuthority/', {
+        templateUrl: 'gajula/daoMaintainance.html',
+        controller: 'daoMaintainanceCtrl',
+		resolve : { 
+				'ENVURLS' : ['$q', 'mainGetService', function ($q, mainGetService) {
+					var deferred = $q.defer();
+					mainGetService.getEnvironmentProperties().then(function (data) {
+						deferred.resolve(data);
+					});
+					return deferred.promise;
+				}
+				]
+		}
+      })
+
+index.html -- <script src="gajula/doaMaintainance.js"></script>-- 

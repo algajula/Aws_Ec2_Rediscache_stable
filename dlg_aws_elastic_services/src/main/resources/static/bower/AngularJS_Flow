@@ -1,0 +1,449 @@
+Module
+======
+angular
+.module('purchasingToolApp', 
+  ['ngRoute',
+   'ui.bootstrap',
+   'ngGrid',
+   'ngCookies',
+   'ngResource'
+  ])
+.config(['$routeProvider','$tooltipProvider', '$httpProvider', function ($routeProvider ,$tooltipProvider, $httpProvider) {
+	$tooltipProvider.options( {appendToBody: true} );
+	//delete $httpProvider.defaults.headers.common['X-Requested-With'];
+    $routeProvider
+      .when('/', {
+        templateUrl: 'views/login.html',
+        controller: 'LoginCtrl',
+		resolve : { 
+				'ENVURLS' : ['$q', 'mainGetService', function ($q, mainGetService) {
+					var deferred = $q.defer();
+					mainGetService.getEnvironmentProperties().then(function (data) {
+						deferred.resolve(data);
+					});
+					return deferred.promise;
+				}
+				]
+		}	
+      })
+	  .when('/modifyPCADelegateAuthority/', {
+        templateUrl: 'gajula/pcaDelegateAuthority.html',
+        controller: 'pcaDelegateAuthorityCtrl',
+		resolve : { 
+				'ENVURLS' : ['$q', 'mainGetService', function ($q, mainGetService) {
+					var deferred = $q.defer();
+					mainGetService.getEnvironmentProperties().then(function (data) {
+						deferred.resolve(data);
+					});
+					return deferred.promise;
+				}
+				]
+		}
+      })
+	  .when('/modifyPCAApprovers/', {
+        templateUrl: 'gajula/pcaApprovers.html',
+        controller: 'pcaApproversCtrl',
+		resolve : { 
+				'ENVURLS' : ['$q', 'mainGetService', function ($q, mainGetService) {
+					var deferred = $q.defer();
+					mainGetService.getEnvironmentProperties().then(function (data) {
+						deferred.resolve(data);
+					});
+					return deferred.promise;
+				}
+				]
+		}
+      })
+      .otherwise({
+        redirectTo: '/'
+      });
+}]);
+
+Service
+=======
+angular.module('purchasingToolApp')
+.service('mainPostService', ['$http','config', '$resource', '$rootScope', function($http, config, $resource, $rootScope){	
+    return {
+		mainPostFileResults: function(formdata, serviceurl){
+		var accIdNameLocl = this.getUserDetails();
+        return	$http.post($rootScope.ENVPROPERTIES.appUrl +'/procurement/'+serviceurl,formdata, {
+        	  /*  url: 
+        	    method: '',
+        	    headers: {'Content-Type': undefined},*/
+        	    withCredentials: true,
+                headers : {
+							'Content-Type' : undefined,
+							'Authorization' : accIdNameLocl
+						},
+                transformRequest: angular.identity
+        	});
+        	
+        },
+        mainPostResults: function(formdata, serviceurl){
+		var accIdNameLocl = this.getUserDetails();		
+        return	$http({
+        	    url: $rootScope.ENVPROPERTIES.appUrl + '/procurement/'+serviceurl,
+        	    method: 'POST',
+        	    headers : {
+							'Content-Type' : undefined,
+							'Authorization' : accIdNameLocl
+						},
+        	    data: formdata
+        	});
+        	
+        },
+		mainPostChkStatusResults : function (formdata, serviceurl, accIdName) {
+					return $http({
+						url : $rootScope.ENVPROPERTIES.appUrl + '/procurement/'+serviceurl,
+						method : 'POST',
+						headers : {
+							'Content-Type' : undefined,
+							'Authorization' : accIdName
+						},
+						data : formdata
+					});
+
+				},
+		getEnvironmentProperties : function () {
+					var environmentPath = 'environment.json';
+					return $resource(environmentPath).get().$promise;
+				},
+		getUserDetails : function () {
+					var accIdName="";
+					var accIdNames="";
+					var name="userInfo";					
+					var nameEQ = name + "=";
+					var ca = document.cookie.split(';');
+					for(var i=0;i < ca.length;i++) {
+						var c = ca[i];
+						while (c.charAt(0)==' ') c = c.substring(1,c.length);
+						if (c.indexOf(nameEQ) == 0) 
+							accIdName= c.substring(nameEQ.length,c.length);
+					}
+					if(accIdName!="" && accIdName!=null && accIdName!=undefined){
+						accIdNames=accIdName;
+					} else accIdNames=undefined+"@@"+undefined+"@@"+undefined+"@@"+undefined+"@@"+undefined+"@@"+undefined;
+					return accIdNames;
+		}
+    };               
+}
+]);
+//GET service
+angular.module('purchasingToolApp')
+.service('mainGetService', [ '$http', 'config', '$resource', '$rootScope', '$cookieStore', function($http, config, $resource, $rootScope,$cookieStore){	
+    return {
+        mainGetResults: function(serviceurl){
+		var accIdNameLocl = this.getUserDetails();
+		//console.info('in service');
+		//console.info(config.servicesDomainName + '/procurement/'+serviceurl);
+        return	$http({
+        	    url: $rootScope.ENVPROPERTIES.appUrl + '/procurement/'+serviceurl,
+        	    method: 'GET',
+				headers : {
+							'Content-Type' : undefined,
+							'Authorization' : accIdNameLocl
+						},
+        	});
+        	
+        },
+		getEnvironmentProperties : function () {
+					var environmentPath = 'environment.json';
+					return $resource(environmentPath).get().$promise;
+		},
+		getUserDetails : function () {
+					var accIdName="";
+					var accIdNames="";
+					var name="userInfo";					
+					var nameEQ = name + "=";
+					var ca = document.cookie.split(';');
+					for(var i=0;i < ca.length;i++) {
+						var c = ca[i];
+						while (c.charAt(0)==' ') c = c.substring(1,c.length);
+						if (c.indexOf(nameEQ) == 0) 
+							accIdName= c.substring(nameEQ.length,c.length);
+					}
+					if(accIdName!="" && accIdName!=null && accIdName!=undefined){
+						accIdNames=accIdName;
+					} else accIdNames=undefined+"@@"+undefined+"@@"+undefined+"@@"+undefined+"@@"+undefined+"@@"+undefined;
+					return accIdNames;
+		},
+		removeUserDetails : function () {
+					var domainName=$rootScope.ENVPROPERTIES.domainName;
+					removeCookie('userInfo', '', domainName);
+					function removeCookie(name, value, domain) {
+						var exdate = -1;						
+						value=value+((domain==null)?'':'; domain='+domain);
+						document.cookie=name+'='+value+'; expires='+exdate+'; path=/';
+					}
+		}
+    };               
+}
+]);
+
+Controller
+==========
+angular.module('purchasingToolApp')
+  .controller('pcaApproversCtrl', ['$scope','$timeout','$http', '$location', '$modal', 'mainGetService', 'mainPostService', 'popupModalFactory', '$routeParams', '$cookieStore', '$rootScope', 'ENVURLS', function ($scope, $timeout,$http, $location, $modal, mainGetService, mainPostService,popupModalFactory, $routeParams, $cookieStore, $rootScope, ENVURLS) {
+	$rootScope.ENVPROPERTIES = ENVURLS;    
+	
+			var statusReq = [];
+			$scope.accIdName=mainGetService.getUserDetails();			
+			
+			mainPostService.mainPostChkStatusResults(statusReq, 'procurement/userstatus/check/status', $scope.accIdName).success(function (data) {
+					if (!data.isLogedIn) {
+						mainGetService.removeUserDetails();
+						var content = {
+						"header" : "Warning",
+						"content" : "You are not authenticated to access the page.",
+						"navPage" : "/"
+					};
+					popupModalFactory.open('serviceResponse.html','successpopupCtrl','md',content); 
+					
+				}else if(data.isLogedIn == true){				
+					if(data.roleId !== "1" ){
+						
+						var content = {
+						"header" : "Warning",
+						"content" : "You are not authorized to access the page.",
+						"navPage" : "natablemaintenance",
+						"accIdName": $scope.accIdName
+					};
+					popupModalFactory.open('serviceResponse.html','successpopupCtrl','md',content); 
+					}
+				}
+			});
+			$scope.accountId = $scope.accIdName.split('@@')[0];
+			$scope.displayName = $scope.accIdName.split('@@')[1];
+			$scope.roleId = $scope.accIdName.split('@@')[2];
+   
+		$scope.logoutUser = function () {				
+				mainGetService.removeUserDetails();
+				$location.path('/');				
+			}; 	
+	
+	$scope.items = [];
+	
+	//$scope.loading = true;
+	mainGetService.mainGetResults('procurement/roles').success(function(data){
+				//$scope.loading = false;
+				//$scope.totalItems = data.length;
+				//$scope.items = data;
+				$scope.drpboxRolIds = data;
+				
+				if (!$scope.$$phase) {
+				$scope.$apply();
+				}
+				
+			}).error(function() {
+					//$scope.loading = false;					
+					console.log('Error in roles service. Please check Logs.');					
+			});
+	
+	var headerTemplate = "<div ng-click='col.sort($event)' ng-class='\"colt\" + col.index' class='ngHeaderText headerTextAPI' ><span tooltip='{{col.displayName.tooltip}}' tooltip-append-to-body='true' tooltip-placement='top'>{{col.displayName.name}}</span></div>";
+	var lesswidth = "<div ng-click='col.sort($event)' ng-class='\"colt\" + col.index' class='ngHeaderText headerTextAPI' ><span tooltip='{{col.displayName.tooltip}}' tooltip-append-to-body='true' tooltip-placement='top'>{{col.displayName.name}}</span></div>";
+		
+	$scope.totalServerItems = 0;
+	$scope.pcaApproversGrid = []; 
+	
+	$scope.loading = true;
+	mainGetService.mainGetResults('procurement/getPcaApprovers').success(function(data){
+				//console.log('getPcaApprovers--'+JSON.stringify(data));
+				$scope.pcaApproversGrid = data;
+				$scope.activeUser = data.activeUser;
+				$scope.inactiveUser = data.inactiveUser;
+				if (!$scope.$$phase) {
+				$scope.$apply();
+				}
+				$scope.loading = false;
+			}).error(function() {
+					$scope.loading = false;					
+					console.log('Error in roles service. Please check Logs.');					
+			});
+
+
+$scope.pcaApproversGridView = {
+    data: 'pcaApproversGrid' ,
+    enableRowSelection: false,
+    enableCellEditOnFocus: true,
+    multiSelect: true,		
+    enableColumnResize: true,
+	columnDefs:[
+	    {field: 'roleName', enableCellEdit:false, displayName:{name:'Approver Role', tooltip:'Approver Role'},headerCellTemplate:lesswidth },
+	    {field:'inactiveUser',cellClass:'align_center', width:250, displayName:{name:'InActive User', tooltip:'InActive User'},headerCellTemplate:headerTemplate, enableCellEdit: false, cellTemplate : '<div><select ng-change= "chgInactiveUser(row.entity, row.entity.inactiveUser,row.rowIndex,row.entity.inactiveUsers)" ng-model="row.entity.inactiveUser" ng-disabled="row.entity.inactiveUsers.length === 1"><option  ng-repeat="l in row.entity.inactiveUsers" value={{l.userId}} ng-selected="l.userId == row.entity.inactiveUser" > {{l.name}}</option></select></div>' },
+	    {field:'activeUser',cellClass:'align_center', width:250, displayName:{name:'Active User', tooltip:'Active User'},headerCellTemplate:headerTemplate, enableCellEdit: false, cellTemplate : '<div><select ng-change= "chgActiveUser(row.entity, row.entity.activeUser,row.rowIndex,row.entity.activeUsers)" ng-model="row.entity.activeUser" ng-disabled="row.entity.inactiveUsers.length === 1"><option  ng-repeat="l in row.entity.activeUsers" value={{l.userId}} ng-selected="l.userId == row.entity.activeUser" > {{l.name}}</option></select></div>' }
+	    ],						
+    enablePaging: false,
+    showFooter: true,
+	headerRowHeight: 60,
+	rowHeight: 40,
+	plugins: [new ngGridFlexibleHeightPlugin()],
+	enablePinning: true,
+    totalServerItems:'totalServerItems'
+    };
+
+
+$scope.chgInactiveUser = function(rowinfo, newInactiveUser, rowindex,inactiveUsers){
+	for(var j in $scope.inactiveUsers){
+		if($scope.inactiveUsers[j].userId == newInactiveUser){
+			rowinfo.inactiveUser = $scope.inactiveUsers[j].userId;
+		}
+	}
+};
+
+$scope.chgActiveUser = function(rowinfo, newActiveUser, rowindex,activeUsers){
+	for(var j in $scope.activeUsers){
+		if($scope.activeUsers[j].userId == newActiveUser){
+			rowinfo.activeUser = $scope.activeUsers[j].userId;
+		}
+	}
+};
+
+
+$scope.saveModifiedPcaappr=function(){
+	console.log('Saving Data------Start-----');
+	var savedData = [];
+	angular.forEach($scope.pcaApproversGrid,function(value){
+		value.activeUsers=[];
+		value.inactiveUsers=[];
+	});
+	console.log('Saving Data--------------------'+angular.toJson($scope.pcaApproversGrid));
+	var validation = false;
+	$scope.loading = true;
+	savedData = {"pcaInactiveApprs":$scope.pcaApproversGrid };
+	if(validation){
+		var content = {
+				"header" : "Success",
+				"content" : "Data updated successfully.",
+				"navPage" : "volcostdatareview",
+				"accIdName": $scope.accIdName
+		};
+		popupModalFactory.open('serviceResponse.html','successpopupCtrl','sm',content);
+	}else{
+		mainPostService.mainPostResults(JSON.stringify(savedData),'procurement/getPcaApproversSave').success(function(data){	
+			$scope.loading = false;
+			var msg= "Update PCA Inactive Approvers Successfully";
+			var content = {
+					 "header" : "Success",
+					 "content" : msg,
+					 "navPage" : "napurchasingexcellence",
+					 "accIdName": $scope.accIdName
+					};
+			popupModalFactory.open('serviceResponse.html','successpopupCtrl','md',content);
+		}).error(function() {
+			 $scope.loading = false;
+			 var content = {
+					 "header" : "Failure",
+					 "content" : "Error while update the supplier details!",
+					 "navPage" : ""
+					};
+			popupModalFactory.open('serviceResponse.html','successpopupCtrl','md',content);
+		});
+	}//else
+}; //saveModifiedPcaappr
+
+}
+]); 
+
+angular.module('purchasingToolApp')
+  .controller('successpopupCtrl', ['$scope', '$modalInstance', 'items', '$location', function ($scope, $modalInstance, items, $location) {
+    $scope.message = items;
+	var accIdNameParam =items.accIdName;
+	$scope.ok = function(){
+		 $modalInstance.close();		 
+		 if(items.navPage !== ""){
+			//location.href = '#/' + items.navPage+'/'+accIdNameParam;
+			$location.path('/'+items.navPage);
+		 }		 
+	};
+}
+]);
+
+Stuff
+=====
+var userData=data.userId+"@@"+data.displayName+"@@"+data.roleId+"@@"+data.userIdNum+"@@"+data.timeStamp+"@@"+data.generatedHashcode;
+var domainName=$rootScope.ENVPROPERTIES.domainName;
+setCookie('userInfo', userData, domainName);
+function setCookie(name, value, domain) {
+	var exdate = new Date();
+	exdate.setDate(exdate.getDate()+1);
+	value=value+((domain==null)?'':'; domain='+domain);
+	document.cookie=name+'='+value+'; expires='+exdate+'; path=/';
+}
+
+LinkPage
+=======
+<li><a href="#/modifyPCAApprovers/" class="padding_prohome_links">Modify PCA Approvers </a></li>
+
+TemplatePage
+============
+<!doctype html>
+<html>
+<head>
+<meta http-equiv="X-UA-Compatible" charset="utf-8">
+<title></title>
+<meta name="description" content="">
+<meta name="viewport" content="width=device-width">
+<meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1"/>
+<link rel="stylesheet" href="styles/bootstrap.min.css">
+<link rel="stylesheet" href="styles/ng-grid.css">
+<link rel="stylesheet" href="styles/style.css">
+<link rel="stylesheet" href="styles/mainstyle.css">
+<link rel="stylesheet" href="styles/jquery-ui.css">
+</head>
+<body ng-app="purchasingToolApp">
+<p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
+<![endif]-->
+<div ng-view></div>
+<!-- Google Analytics: change UA-XXXXX-X to be your site's ID -->
+ <script>
+  !function(A,n,g,u,l,a,r){A.GoogleAnalyticsObject=l,A[l]=A[l]||function(){
+  (A[l].q=A[l].q||[]).push(arguments)},A[l].l=+new Date,a=n.createElement(g),
+  r=n.getElementsByTagName(g)[0],a.src=u,r.parentNode.insertBefore(a,r)
+  }(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-XXXXX-X');
+  ga('send', 'pageview');
+ </script>
+
+ <!-- build:js(.) scripts/vendor.js -->
+ <!-- bower:js -->
+ <script src="bower_components/jquery/dist/jquery-1.11.3.js"></script>
+ <script src="bower_components/es5-shim/es5-shim.js"></script>
+ <script src="bower_components/angular/angular.js"></script>
+ <script src="bower_components/json3/lib/json3.min.js"></script>
+ <script src="bower_components/angular-route/angular-route.js"></script>
+ <script src="bower_components/angular-cookies/angular-cookies.js"></script>
+ <script src="bower_components/angular-resource/angular-resource.js"></script>
+ <!-- endbower -->
+ <!-- endbuild -->
+<!-- build:js({.tmp,app}) scripts/scripts.js -->
+<script src="scripts/app.js"></script>
+<script src="scripts/lib/ng-grid-2.0.7.min.js"></script>
+<script src="scripts/lib/ng-grid-layout.js"></script>
+<script src="scripts/lib/jquery-ui.js"></script>
+<script src="scripts/lib/dynamic-number.js"></script>
+<script type="text/javascript" src="scripts/lib/date.js"></script>
+<script src="scripts/services/mainService.js"></script>
+<!-- endbuild -->
+</body>
+</html>
+
+Build File
+==========
+{
+  "name": "purchasing-tool",
+  "version": "0.0.0",
+  "dependencies": {
+    "angular": "1.2.15",
+	"json3": "~3.2.6",
+    "es5-shim": "~2.1.0",
+	"jquery": "~1.11.0", or "~1.11.3",
+    "angular-route": "1.2.15",
+	"angular-cookies": "1.2.15",
+	"angular-resource": "1.2.15"
+  },
+  "devDependencies": {
+    "angular-mocks": "1.2.15"
+  },
+  "appPath": "app",
+  "moduleName": "purchasingToolApp"
+}
